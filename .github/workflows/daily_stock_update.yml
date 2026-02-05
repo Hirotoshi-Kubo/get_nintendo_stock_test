@@ -21,3 +21,11 @@ jobs:
 
       - name: Run script
         run: uv run main.py # あなたの実行ファイル名に合わせて変更
+      
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add stock_data.db  # ここは実際のDBファイル名
+          git commit -m "Update stock data" || exit 0
+          git push
