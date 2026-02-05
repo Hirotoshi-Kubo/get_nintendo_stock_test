@@ -1,0 +1,17 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+#DB
+nintendo_stock.db
+
+#non-required python files
+get_nintendo_stock.py
+save_data.py
