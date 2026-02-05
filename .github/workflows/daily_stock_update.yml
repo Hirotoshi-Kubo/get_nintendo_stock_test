@@ -26,6 +26,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add stock_data.db  # ここは実際のDBファイル名
+          git add nintendo_stock.db  # ここは実際のDBファイル名
           git commit -m "Update stock data" || exit 0
           git push
