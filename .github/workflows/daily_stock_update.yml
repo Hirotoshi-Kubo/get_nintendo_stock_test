@@ -1,0 +1,23 @@
+name: Daily Stock Update
+
+on:
+  schedule:
+    - cron: '0 0 * * 1-5' # 平日の日本時間 朝9時（UTC 0時）に実行
+  workflow_dispatch:      # 手動実行も可能にする
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Run script
+        run: uv run main.py # あなたの実行ファイル名に合わせて変更
