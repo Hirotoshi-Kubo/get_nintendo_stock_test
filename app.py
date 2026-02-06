@@ -2,6 +2,8 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import plotly.express as px
+from datetime import timedelta
+from config import TICKERS
 
 st.set_page_config(
     page_title="ゲーム株ダッシュボード",
@@ -16,24 +18,21 @@ def load_data():
     conn = sqlite3.connect("nintendo_stock.db")
     df = pd.read_sql("SELECT * FROM stock_price ORDER BY Date ASC", conn)
     conn.close()
+    df["Date"] = pd.to_datetime(df["Date"])  # 日付型に変換
     return df
 
 df = load_data()
 
-tickers = {
-    '7974.T': 'Nintendo',
-    '9684.T': 'Square Enix'
-}
-
-if not df.empty:
-    
+if df.empty:
+    st.error("データがありません。`python main.py` を実行してデータを取得してください。")
+else:
     #表示株価設定
     stock_list = df["Ticker"].unique()
     selected_stocks = st.sidebar.multiselect(
         "銘柄選択",
         stock_list,
         default=stock_list,  # デフォルトで全て選択
-        format_func=lambda x: tickers.get(x, x)
+        format_func=lambda x: TICKERS.get(x, x)
     )
 
     if not selected_stocks:
@@ -51,23 +50,23 @@ if not df.empty:
             30
         )
         
-        # 選択された銘柄ごとに最新データを取得して表示
-        # 銘柄名でマッピングして色分けなどの準備も可能だが、Plotlyが自動でやってくれる
+        # 日付でフィルタ（直近N日間）
+        latest_date = df_selected["Date"].max()
+        start_date = latest_date - timedelta(days=num_days)
+        df_filtered = df_selected[df_selected["Date"] >= start_date]
         
         #グラフ作成
         fig = px.line(
-            df_selected.tail(num_days * len(selected_stocks)), # 複数銘柄あるのでデータ数は銘柄数倍必要だが、日付フィルタの方が正確。簡易的にtailで取る場合注意が必要だが、日付で切るのがベスト。
-            # 今回は簡易的にtailを使うが、正確には日付でフィルタすべき。
-            # dataはreset_indexなどで整形済みと仮定するか、日付でフィルタする。
-            # ここではシンプルに日付でフィルタするように修正する
+            df_filtered,
             x="Date",
             y="Close",
             color="Ticker",
             title=f"株価推移 ({num_days}日間)"
         )
         
-        # 銘柄名の表示を日本語にするために置換
-        fig.for_each_trace(lambda t: t.update(name = tickers.get(t.name, t.name)))
+        # 銘柄名を日本語に置換 & ホバー設定
+        fig.for_each_trace(lambda t: t.update(name = TICKERS.get(t.name, t.name)))
+        fig.update_layout(hovermode="x unified")
 
         #画面表示
         st.plotly_chart(fig, use_container_width=True)
@@ -85,12 +84,13 @@ if not df.empty:
                 
                 with cols[i]:
                     st.metric(
-                        label=f"{tickers.get(stock, stock)}",
+                        label=f"{TICKERS.get(stock, stock)}",
                         value=f'{latest["Close"]:.0f}円',
                         delta=f'{latest["Close"] - prev["Close"]:.0f}円'
                     )
 
         st.subheader("詳細データ")
-        st.dataframe(df_selected.sort_values(by=["Date", "Ticker"], ascending=[False, True]).head(10))
-
-
+        df_display = df_selected.sort_values(by=["Date", "Ticker"], ascending=[False, True]).head(10).copy()
+        df_display["Date"] = df_display["Date"].dt.strftime("%Y-%m-%d")
+        df_display["Ticker"] = df_display["Ticker"].map(TICKERS)
+        st.dataframe(df_display, hide_index=True)

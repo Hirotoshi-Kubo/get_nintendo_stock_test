@@ -1,13 +1,9 @@
 import sqlite3
 import yfinance as yf
 import pandas as pd
+from config import TICKERS
 
 def update_stock_db():
-    tickers = {
-        '7974.T': 'Nintendo',
-        '9684.T': 'Square Enix'
-    }
-
     #DB接続
     conn = sqlite3.connect("nintendo_stock.db")
     cur = conn.cursor()
@@ -58,8 +54,8 @@ def update_stock_db():
     )
     ''')
 
-    for ticker in tickers:
-        print(f"{tickers[ticker]}({ticker})のデータを取得中...")
+    for ticker in TICKERS:
+        print(f"{TICKERS[ticker]}({ticker})のデータを取得中...")
         #株価取得
         try:
             df = yf.Ticker(ticker).history(period="5d")[['Close', 'Volume']]
