@@ -4,11 +4,11 @@ import pandas as pd
 import plotly.express as px
 
 st.set_page_config(
-    page_title="任天堂株価アプリ",
+    page_title="ゲーム株株価アプリ",
     page_icon="🎮",
     layout="wide"
 )
-st.title("📈 任天堂 (7974.T) 価格推移ダッシュボード")
+st.title("ゲーム株価格推移ダッシュボード")
 
 #DBからデータを取得
 @st.cache_data(ttl=3600)    #1時間毎にDB読み込み
@@ -20,27 +20,38 @@ def load_data():
 
 df = load_data()
 
-#サイドバーで表示期間設定
-st.sidebar.header("表示設定")
-num_days = st.sidebar.slider(
-    "表示日数",
-    1,
-    len(df),
-    30
-)
-
-#グラフ作成
-fig = px.line(
-    df.tail(num_days),
-    x="Date",
-    y="Close",
-    title=f"任天堂株価推移 ({num_days}日間)"
-)
-fig.update_traces(
-    line=dict(
-        color="red",
-        width=2
+if not df.empty:
+    
+    #表示株価設定
+    stock_list = df["ticker"].unique()
+    selected_stock = st.sidebar.selectbox(
+        "銘柄選択",
+        stock_list
     )
+
+    #表示銘柄のデータを抽出
+    df_selected = df[df["ticker"] == selected_stock]
+
+    #サイドバーで表示期間設定
+    st.sidebar.header("表示設定")
+    num_days = st.sidebar.slider(
+        "表示日数",
+        1,
+        len(df),
+        30
+    )
+    #グラフ作成
+    fig = px.line(
+        df_selected.tail(num_days),
+        x="Date",
+        y="Close",
+        title=f"{selected_stock}株価推移 ({num_days}日間)"
+    )
+    fig.update_traces(
+        line=dict(
+            color="red",
+            width=2
+        )
 )
 
 #画面表示
