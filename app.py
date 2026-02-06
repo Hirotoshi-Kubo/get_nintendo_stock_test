@@ -20,17 +20,24 @@ def load_data():
 
 df = load_data()
 
+tickers = {
+    '7974.T': 'Nintendo',
+    '9684.T': 'Square Enix'
+}
+
+
 if not df.empty:
     
     #表示株価設定
-    stock_list = df["ticker"].unique()
+    stock_list = df["Ticker"].unique()
     selected_stock = st.sidebar.selectbox(
         "銘柄選択",
-        stock_list
+        stock_list,
+        format_func=lambda x: tickers.get(x, x)
     )
 
     #表示銘柄のデータを抽出
-    df_selected = df[df["ticker"] == selected_stock]
+    df_selected = df[df["Ticker"] == selected_stock]
 
     #サイドバーで表示期間設定
     st.sidebar.header("表示設定")
@@ -45,7 +52,7 @@ if not df.empty:
         df_selected.tail(num_days),
         x="Date",
         y="Close",
-        title=f"{selected_stock}株価推移 ({num_days}日間)"
+        title=f"{tickers.get(selected_stock, selected_stock)}株価推移 ({num_days}日間)"
     )
     fig.update_traces(
         line=dict(
@@ -62,12 +69,12 @@ with col1:
 
 with col2:
     st.subheader("最新データ")
-    st.write(df.tail(5))
+    st.write(df_selected.tail(5))
 
 st.metric(
     label="最新株価",
-    value=f'{df["Close"].iloc[-1]:.0f}円',
-    delta=f'{df["Close"].iloc[-1] - df["Close"].iloc[-2]:.0f}円'
+    value=f'{df_selected["Close"].iloc[-1]:.0f}円',
+    delta=f'{df_selected["Close"].iloc[-1] - df_selected["Close"].iloc[-2]:.0f}円'
 )
 
 
