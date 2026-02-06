@@ -12,3 +12,6 @@ wheels/
 #non-required python files
 get_nintendo_stock.py
 save_data.py
+
+#database
+nintendo_stock.db
