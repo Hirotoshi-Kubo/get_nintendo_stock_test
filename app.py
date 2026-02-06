@@ -11,6 +11,7 @@ st.set_page_config(
 st.title("📈 任天堂 (7974.T) 価格推移ダッシュボード")
 
 #DBからデータを取得
+@st.cache_data(ttl=3600)    #1時間毎にDB読み込み
 def load_data():
     conn = sqlite3.connect("nintendo_stock.db")
     df = pd.read_sql("SELECT * FROM stock_price ORDER BY Date ASC", conn)
