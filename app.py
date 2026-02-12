@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 from datetime import timedelta
-from config import TICKERS
+from config import TICKERS, DB_PATH
 
 st.set_page_config(
     page_title="ゲーム株ダッシュボード",
@@ -15,9 +15,8 @@ st.title("ゲーム株価格推移ダッシュボード")
 #DBからデータを取得
 @st.cache_data(ttl=3600)    #1時間毎にDB読み込み
 def load_data():
-    conn = sqlite3.connect("nintendo_stock.db")
-    df = pd.read_sql("SELECT * FROM stock_price ORDER BY Date ASC", conn)
-    conn.close()
+    with sqlite3.connect(DB_PATH) as conn:
+        df = pd.read_sql("SELECT * FROM stock_price ORDER BY Date ASC", conn)
     df["Date"] = pd.to_datetime(df["Date"])  # 日付型に変換
     return df
 
@@ -43,11 +42,12 @@ else:
 
         #サイドバーで表示期間設定
         st.sidebar.header("表示設定")
+        max_days = (df["Date"].max() - df["Date"].min()).days
         num_days = st.sidebar.slider(
             "表示日数",
             1,
-            len(df) // len(stock_list),  # おおよその最大日数
-            30
+            max(max_days, 1),
+            min(30, max(max_days, 1))
         )
         
         # 日付でフィルタ（直近N日間）
@@ -93,4 +93,5 @@ else:
         df_display = df_selected.sort_values(by=["Date", "Ticker"], ascending=[False, True]).head(10).copy()
         df_display["Date"] = df_display["Date"].dt.strftime("%Y-%m-%d")
         df_display["Ticker"] = df_display["Ticker"].map(TICKERS)
+        df_display = df_display.rename(columns={"Date": "日付", "Ticker": "銘柄", "Close": "終値", "Volume": "出来高"})
         st.dataframe(df_display, hide_index=True)
